@@ -8,7 +8,7 @@ imu:
     enable: false
     weight: 0.01
   noise:
-    linAcc: 0.001
+    linAcc: 0.01
     angVel: 0.001
     linAccBias: 0.001
     angVelBias: 0.0001
