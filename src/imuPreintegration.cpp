@@ -1,5 +1,9 @@
 #include "utility.h"
 
+#include <chrono>
+
+#include <mrs_msgs/Float64Stamped.h>
+
 #include <gtsam/geometry/Rot3.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -70,6 +74,7 @@ namespace liosam
       ros::Publisher pubAngVel;
       ros::Publisher pubAngVelBias;
       ros::Publisher pubDeltaV;
+      ros::Publisher pubPreDuration;
 
       std::shared_ptr<mrs_lib::Transformer> transformer;
 
@@ -168,6 +173,7 @@ namespace liosam
         pubAngVel = nh.advertise<geometry_msgs::Vector3Stamped>("liosam/preintegration/ang_vel_out", 10);
         pubAngVelBias = nh.advertise<geometry_msgs::Vector3Stamped>("liosam/preintegration/ang_vel_bias_out", 10);
         pubDeltaV = nh.advertise<geometry_msgs::Vector3Stamped>("liosam/preintegration/delta_v_out", 10);
+        pubPreDuration = nh.advertise<mrs_msgs::Float64Stamped>("liosam/preintegration/duration_out", 10);
 
         boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(gravity);
         p->accelerometerCovariance                       = gtsam::Matrix33::Identity(3, 3) * pow(linAccNoise, 2);  // acc white noise in continuous
@@ -557,8 +563,10 @@ namespace liosam
         lastImuT_predict = imuTime;
 
         // integrate this single imu message
+       std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         imuIntegratorPredict_->integrateMeasurement(gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z),
                                             gtsam::Vector3(thisImu.angular_velocity.x, thisImu.angular_velocity.y, thisImu.angular_velocity.z), dt);
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
         // predict odometry
         const gtsam::NavState currentState = imuIntegratorPredict_->predict(prevStateOdom_, prevBiasOdom_);
@@ -589,6 +597,12 @@ namespace liosam
         odometry->twist.twist.angular.z = thisImu.angular_velocity.z + prevBiasOdom_.gyroscope().z();
         pubPreOdometry.publish(odometry);
 
+        double t_dur = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+        mrs_msgs::Float64Stamped t_dur_msg;
+        t_dur_msg.header.stamp = ros::Time::now();
+        t_dur_msg.header.frame_id = "mas_preintegrate_duration";
+        t_dur_msg.value = t_dur;
+        pubPreDuration.publish(t_dur_msg);
       }
       /*//}*/
     };

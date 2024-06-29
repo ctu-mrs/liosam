@@ -49,6 +49,7 @@
       <remap from="~liosam/preintegration/ang_vel_out" to="$(arg node_prefix)liosam/preintegration/ang_vel" />
       <remap from="~liosam/preintegration/lin_acc_bias_out" to="$(arg node_prefix)liosam/preintegration/lin_acc_bias" />
       <remap from="~liosam/preintegration/ang_vel_bias_out" to="$(arg node_prefix)liosam/preintegration/ang_vel_bias" />
+      <remap from="~liosam/preintegration/duration_out" to="$(arg node_prefix)liosam/preintegration/duration" />
 
     </node>
 <!--//}-->
