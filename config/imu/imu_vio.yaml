@@ -1,6 +1,6 @@
 imu:
-  frame_id: "base_link"
-  topic: "vio_imu/data"
+  frame_id: "vio_imu"
+  topic: "vio_imu/imu_raw_fcu"
   gravity: 9.8
   providesOrientation: false # requires 9-DOF IMU
   deskew: false # use imu to deskew cloud (requires 9-DOF IMU)

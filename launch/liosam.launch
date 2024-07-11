@@ -11,7 +11,7 @@
   <arg if="$(eval arg('RUN_TYPE') == 'simulation')" name="config_file" value="$(find liosam)/config/simulation.yaml" />
   <arg if="$(eval arg('RUN_TYPE') == 'realworld')" name="config_file" value="$(find liosam)/config/realworld.yaml" />
     
-  <arg name="frame_baselink" default="$(arg UAV_NAME)/base_link" />
+  <arg name="frame_baselink" default="$(arg UAV_NAME)/fcu" />
   <arg name="frame_lidar" default="$(arg UAV_NAME)/os_sensor" />
   <arg name="frame_odom" default="$(arg UAV_NAME)/$(arg node_prefix)slam_origin" />
   <arg name="frame_map" default="$(arg UAV_NAME)/$(arg node_prefix)slam_mapping_origin" />
@@ -23,6 +23,36 @@
     
   <arg name="imu_type" default=""/>
   <arg name="imu_config_file" default="$(find liosam)/config/imu/imu_$(arg imu_type).yaml"/>
+
+<!--//{ transforms imu measurements to fcu frame -->
+  <group ns="$(arg UAV_NAME)" if="$(eval arg('imu_type') == 'vio')" >
+    <arg name="imu_frame" default="$(arg UAV_NAME)/vio_imu"/>
+    <arg name="fcu_frame" default="$(arg UAV_NAME)/fcu"/>
+
+    <node name="imu_transformer" pkg="imu_transformer" type="imu_transformer_node" output="screen" >
+      <param name="target_frame" type="str" value="$(arg fcu_frame)" />
+
+        <remap from="imu_in/data" to="vio_imu/imu_raw" />
+        <remap from="imu_out/data" to="vio_imu/imu_raw_fcu" />
+    </node>
+<!--//}-->
+
+  </group>
+
+<!--//{ transforms imu measurements to fcu frame -->
+  <group ns="$(arg UAV_NAME)" if="$(eval arg('imu_type') == 'vio_filtered')" >
+    <arg name="imu_frame" default="$(arg UAV_NAME)/vio_imu"/>
+    <arg name="fcu_frame" default="$(arg UAV_NAME)/fcu"/>
+
+    <node name="imu_filtered_transformer" pkg="imu_transformer" type="imu_transformer_node" output="screen" >
+      <param name="target_frame" type="str" value="$(arg fcu_frame)" />
+
+        <remap from="imu_in/data" to="vio_imu/imu_filtered" />
+        <remap from="imu_out/data" to="vio_imu/imu_filtered_fcu" />
+    </node>
+<!--//}-->
+
+  </group>
 
   <group ns="$(arg UAV_NAME)">
    

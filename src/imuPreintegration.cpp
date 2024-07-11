@@ -488,21 +488,21 @@ namespace liosam
           }
         }
 
-        geometry_msgs::Vector3Stamped lin_acc_bias_msg;
-        lin_acc_bias_msg.header.stamp = ros::Time::now();
-        lin_acc_bias_msg.header.frame_id = "fcu";
-        lin_acc_bias_msg.vector.x = prevBias_.accelerometer()[0];
-        lin_acc_bias_msg.vector.y = prevBias_.accelerometer()[1];
-        lin_acc_bias_msg.vector.z = prevBias_.accelerometer()[2];
-        pubLinAccBias.publish(lin_acc_bias_msg);
+        /* geometry_msgs::Vector3Stamped lin_acc_bias_msg; */
+        /* lin_acc_bias_msg.header.stamp = ros::Time::now(); */
+        /* lin_acc_bias_msg.header.frame_id = "fcu"; */
+        /* lin_acc_bias_msg.vector.x = prevBias_.accelerometer()[0]; */
+        /* lin_acc_bias_msg.vector.y = prevBias_.accelerometer()[1]; */
+        /* lin_acc_bias_msg.vector.z = prevBias_.accelerometer()[2]; */
+        /* pubLinAccBias.publish(lin_acc_bias_msg); */
 
-        geometry_msgs::Vector3Stamped ang_vel_bias_msg;
-        ang_vel_bias_msg.header.stamp = ros::Time::now();
-        ang_vel_bias_msg.header.frame_id = "fcu";
-        ang_vel_bias_msg.vector.x = prevBias_.gyroscope()[0];
-        ang_vel_bias_msg.vector.y = prevBias_.gyroscope()[1];
-        ang_vel_bias_msg.vector.z = prevBias_.gyroscope()[2];
-        pubAngVelBias.publish(ang_vel_bias_msg);
+        /* geometry_msgs::Vector3Stamped ang_vel_bias_msg; */
+        /* ang_vel_bias_msg.header.stamp = ros::Time::now(); */
+        /* ang_vel_bias_msg.header.frame_id = "fcu"; */
+        /* ang_vel_bias_msg.vector.x = prevBias_.gyroscope()[0]; */
+        /* ang_vel_bias_msg.vector.y = prevBias_.gyroscope()[1]; */
+        /* ang_vel_bias_msg.vector.z = prevBias_.gyroscope()[2]; */
+        /* pubAngVelBias.publish(ang_vel_bias_msg); */
 
         ++key;
         doneFirstOpt = true;
@@ -521,11 +521,11 @@ namespace liosam
 
         const Eigen::Vector3f bla(biasCur.accelerometer().x(), biasCur.accelerometer().y(), biasCur.accelerometer().z());
         const Eigen::Vector3f baa(biasCur.gyroscope().x(), biasCur.gyroscope().y(), biasCur.gyroscope().z());
-        if (bla.norm() > 1.0 || baa.norm() > 1.0)
-        {
-          ROS_WARN("Large bias, reset IMU-preintegration!");
-          return true;
-        }
+        /* if (bla.norm() > 1.0 || baa.norm() > 1.0) */
+        /* { */
+        /*   ROS_WARN("Large bias, reset IMU-preintegration!"); */
+        /*   return true; */
+        /* } */
 
         return false;
       }
@@ -597,12 +597,50 @@ namespace liosam
         odometry->twist.twist.angular.z = thisImu.angular_velocity.z + prevBiasOdom_.gyroscope().z();
         pubPreOdometry.publish(odometry);
 
+        const gtsam::Vector3          lin_acc_b = gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z);
+        geometry_msgs::Vector3Stamped lin_acc_msg;
+        gtsam::Vector3                lin_acc_w = prevPose_.rotation() * lin_acc_b;
+        lin_acc_msg.header.stamp                = msg_in->header.stamp;
+        lin_acc_msg.header.frame_id             = "world";
+        lin_acc_msg.vector.x                    = lin_acc_w[0];
+        lin_acc_msg.vector.y                    = lin_acc_w[1];
+        lin_acc_msg.vector.z                    = lin_acc_w[2];
+        pubLinAcc.publish(lin_acc_msg);
+
+        const gtsam::Vector3          ang_vel_b = gtsam::Vector3(thisImu.angular_velocity.x, thisImu.angular_velocity.y, thisImu.angular_velocity.z);
+        geometry_msgs::Vector3Stamped ang_vel_msg;
+        ang_vel_msg.header.stamp    = msg_in->header.stamp;
+        ang_vel_msg.header.frame_id = "fcu";
+        ang_vel_msg.vector.x        = ang_vel_b[0];
+        ang_vel_msg.vector.y        = ang_vel_b[1];
+        ang_vel_msg.vector.z        = ang_vel_b[2];
+        pubAngVel.publish(ang_vel_msg);
+
+        const gtsam::Vector3          lin_acc_bias_b = prevBias_.accelerometer();
+        gtsam::Vector3                lin_acc_bias_w = prevPose_.rotation() * lin_acc_bias_b;
+        geometry_msgs::Vector3Stamped lin_acc_bias_msg;
+        lin_acc_bias_msg.header.stamp    = msg_in->header.stamp;
+        lin_acc_bias_msg.header.frame_id = "world";
+        lin_acc_bias_msg.vector.x        = lin_acc_bias_w[0];
+        lin_acc_bias_msg.vector.y        = lin_acc_bias_w[1];
+        lin_acc_bias_msg.vector.z        = lin_acc_bias_w[2];
+        pubLinAccBias.publish(lin_acc_bias_msg);
+
+        geometry_msgs::Vector3Stamped ang_vel_bias_msg;
+        ang_vel_bias_msg.header.stamp    = msg_in->header.stamp;
+        ang_vel_bias_msg.header.frame_id = "fcu";
+        ang_vel_bias_msg.vector.x        = prevBias_.gyroscope()[0];
+        ang_vel_bias_msg.vector.y        = prevBias_.gyroscope()[1];
+        ang_vel_bias_msg.vector.z        = prevBias_.gyroscope()[2];
+        pubAngVelBias.publish(ang_vel_bias_msg);
+
         double t_dur = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         mrs_msgs::Float64Stamped t_dur_msg;
         t_dur_msg.header.stamp = ros::Time::now();
-        t_dur_msg.header.frame_id = "mas_preintegrate_duration";
+        t_dur_msg.header.frame_id = "imu_preintegrate_duration";
         t_dur_msg.value = t_dur;
         pubPreDuration.publish(t_dur_msg);
+
       }
       /*//}*/
     };
