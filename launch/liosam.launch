@@ -95,7 +95,8 @@
         <!-- subscribers -->
         <remap from="~odom_incremental_in" to="$(arg node_prefix)liosam/odometry/preintegrated" />
         <remap from="~cloud_in" to="os_cloud_nodelet/points_processed" />
-
+	<remap from="~imu_in" to="os_cloud_nodelet/imu" /> 
+	
         <!-- publishers -->
         <remap from="~liosam/deskew/deskewed_cloud_out" to="$(arg node_prefix)liosam/deskew/deskewed_cloud" />
         <remap from="~liosam/deskew/deskewed_cloud_info_out" to="$(arg node_prefix)liosam/deskew/deskewed_cloud_info" />
